@@ -34,9 +34,37 @@ input,textarea,button,select{width:100%;padding:12px;margin:6px 0;border-radius:
 button{background:#00bcd4;color:#001018;font-weight:bold;border:0}
 .result{overflow-wrap:anywhere;background:rgba(6,16,26,0.6);padding:10px;border-radius:7px;min-height:35px}
 small{color:#9cb9c8}
+
+/* Login overlay */
+#loginOverlay{
+  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);z-index:9999;padding:20px
+}
+#loginBox{width:100%;max-width:420px;background:linear-gradient(180deg,rgba(8,20,30,0.95),rgba(12,30,48,0.95));padding:20px;border-radius:12px;border:1px solid rgba(0,229,255,0.08)}
+#loginBox h2{color:#00e5ff;margin:0 0 10px}
+.login-row{margin-bottom:8px}
+.login-error{color:#ff6b6b;margin-top:8px;min-height:20px}
+.logout-btn{position:fixed;top:14px;left:14px;background:#111;color:#fff;border:0;padding:8px 10px;border-radius:8px;z-index:2}
 </style>
 </head>
 <body>
+<button id="logoutBtn" class="logout-btn" style="display:none">تسجيل خروج</button>
+
+<div id="loginOverlay" aria-hidden="false">
+  <div id="loginBox" role="dialog" aria-labelledby="loginTitle">
+    <h2 id="loginTitle">تسجيل الدخول</h2>
+    <div class="login-row">
+      <label for="loginUser">اسم المستخدم</label>
+      <input id="loginUser" type="text" autocomplete="username">
+    </div>
+    <div class="login-row">
+      <label for="loginPass">كلمة المرور</label>
+      <input id="loginPass" type="password" autocomplete="current-password">
+    </div>
+    <button id="loginBtn" type="button">دخول</button>
+    <div class="login-error" id="loginError" aria-live="polite"></div>
+  </div>
+</div>
+
 <header>
 <h1>CYBER TOOLS PRO PLUS</h1>
 <p>Cybersecurity Toolkit</p>
@@ -110,6 +138,60 @@ small{color:#9cb9c8}
 
 </main>
 <script>
+/* Credentials - client-side check (NOT secure against attackers). */
+const AUTH_USERNAME = 'Max2';
+const AUTH_PASSWORD = 'You are finished';
+
+function showOverlay(show){
+  const ov = document.getElementById('loginOverlay');
+  const logout = document.getElementById('logoutBtn');
+  if(show){
+    ov.style.display = 'flex';
+    ov.setAttribute('aria-hidden','false');
+    logout.style.display = 'none';
+    document.getElementById('loginUser').focus();
+  } else {
+    ov.style.display = 'none';
+    ov.setAttribute('aria-hidden','true');
+    logout.style.display = 'block';
+  }
+}
+
+function unlock(){
+  sessionStorage.setItem('cyber_auth','true');
+  showOverlay(false);
+}
+function lock(){
+  sessionStorage.removeItem('cyber_auth');
+  showOverlay(true);
+}
+
+document.getElementById('loginBtn').addEventListener('click', () => {
+  const user = document.getElementById('loginUser').value;
+  const pass = document.getElementById('loginPass').value;
+  const err = document.getElementById('loginError');
+  if(user === AUTH_USERNAME && pass === AUTH_PASSWORD){
+    err.textContent = 'تم تسجيل الدخول';
+    setTimeout(unlock,200);
+  } else {
+    err.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة';
+  }
+});
+
+// Allow Enter key to submit login
+document.getElementById('loginPass').addEventListener('keydown', (e)=>{ if(e.key==='Enter') document.getElementById('loginBtn').click(); });
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  lock();
+});
+
+// On load, check sessionStorage
+window.addEventListener('DOMContentLoaded', ()=>{
+  const ok = sessionStorage.getItem('cyber_auth') === 'true';
+  showOverlay(!ok);
+});
+
+/* Original app functions (unchanged) */
 function password(){
  const n=Math.max(8,Math.min(128,Number(document.getElementById('plen').value)||20));
  const chars="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*_-+=";
@@ -171,7 +253,7 @@ function checkURL(){
  if(u.hostname.startsWith("xn--")||u.hostname.includes(".xn--"))issues.push("قد يحتوي على اسم نطاق دولي ملتبس");
  if(/^\d{1,3}(\.\d{1,3}){3}$/.test(u.hostname))issues.push("يستخدم عنوان IP مباشرة");
  if(u.hostname.length>50)issues.push("اسم النطاق طويل بشكل غير معتاد");
- out.textContent=issues.length?"مؤشرات تستحق المراجعة:\n• "+issues.join("\n• "):"لم تظهر المؤشرات البسيطة التي يفح��ها هذا الاختبار. هذا لا يعني أن الرابط آمن.";
+ out.textContent=issues.length?"مؤشرات تستحق المراجعة:\n• "+issues.join("\n• "):"لم تظهر المؤشرات البسيطة التي يفحصها هذا الاختبار. هذا لا يعني أن الرابط آمن.";
  }catch(e){out.textContent="عنوان URL غير صالح"}
 }
 function base64(){
