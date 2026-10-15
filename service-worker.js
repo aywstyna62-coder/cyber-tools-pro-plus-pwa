@@ -1,15 +1,17 @@
-const CACHE_NAME = 'cybertools-v1';
+const CACHE_NAME = 'cybertools-v2';
 const ASSETS = [
   '/',
   '/index.html',
   '/offline.html',
   '/manifest.json',
+  '/images/hacker.svg',
   '/icons/icon-192.png',
   '/icons/icon-512.png'
 ];
 
 // Install: cache core assets
 self.addEventListener('install', event => {
+  console.log('[SW] install');
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
@@ -18,6 +20,7 @@ self.addEventListener('install', event => {
 
 // Activate: cleanup old caches
 self.addEventListener('activate', event => {
+  console.log('[SW] activate');
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.map(k => (k !== CACHE_NAME) ? caches.delete(k) : Promise.resolve()))
@@ -53,7 +56,7 @@ self.addEventListener('fetch', event => {
         return resp;
       }).catch(() => {
         // fallback to offline for images/icons
-        if (request.destination === 'image') return caches.match('/icons/icon-192.png');
+        if (request.destination === 'image') return caches.match('/images/hacker.svg');
       });
     })
   );
